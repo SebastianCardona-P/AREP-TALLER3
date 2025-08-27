@@ -1,4 +1,4 @@
-# Web Framework for REST Services and Static File Management - AREP Workshop 2
+# MicroFramework Spring Boot - AREP Workshop 3
 
 A comprehensive web framework built in Java that enables developers to create REST services using lambda functions and manage static files efficiently. This project enhances the basic HTTP server from Workshop 1 by converting it into a fully functional web framework for backend development.
 
