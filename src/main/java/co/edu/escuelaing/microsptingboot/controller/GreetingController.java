@@ -19,4 +19,9 @@ public class GreetingController {
 	public static String greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
 		return "Hola " + name;
 	}
+        
+        @GetMapping("/hello")
+        public static String helloService(@RequestParam(value = "name", defaultValue = "World") String name){
+            return "Hola hola " + name;
+        }
 }
