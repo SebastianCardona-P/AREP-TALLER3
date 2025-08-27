@@ -2,6 +2,7 @@ package co.edu.escuelaing.microsptingboot.httpServer;
 
 
 import co.edu.escuelaing.microsptingboot.annotations.GetMapping;
+import co.edu.escuelaing.microsptingboot.annotations.RequestParam;
 import co.edu.escuelaing.microsptingboot.annotations.RestController;
 import java.net.*;
 import java.io.*;
@@ -249,7 +250,19 @@ public class HttpServer {
                 + "\n\r";
 
         try {
-            out.write(header + m.invoke(null));
+            
+            RequestParam rp = (RequestParam) m.getParameterAnnotations()[0][0];
+            
+            String queryParamName = rp.value();
+            
+            String paramName = req.getValue(queryParamName);
+            
+            if (paramName.equalsIgnoreCase("")){
+                paramName = rp.defaultValue();
+            }
+            
+            String[] argsValues = new String[]{paramName}; 
+            out.write(header + m.invoke(null, argsValues));
         } catch (IllegalAccessException ex) {
             System.getLogger(HttpServer.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         } catch (InvocationTargetException ex) {
