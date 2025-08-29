@@ -10,6 +10,8 @@ import java.lang.reflect.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 public class HttpServer {
 
@@ -19,20 +21,156 @@ public class HttpServer {
     public static Map<String, Method> services = new HashMap<>();
 
     public static void loadServices(String[] args) {
+        // Si se proporciona un parámetro específico, usar el método original
+        if (args != null && args.length > 0) {
+            loadSpecificController(args[0]);
+        } else {
+            // Explorar automáticamente el classpath
+            loadAllRestControllers();
+        }
+    }
+
+    /**
+     * Método original para cargar un controlador específico
+     */
+    private static void loadSpecificController(String className) {
         try {
-            Class c = Class.forName(args[0]);
-            if (c.isAnnotationPresent(RestController.class)){
-                Method[] methods = c.getDeclaredMethods();
-                for (Method m : methods){
-                    if(m.isAnnotationPresent(GetMapping.class)){
-                        String mapping = m.getAnnotation(GetMapping.class).value();
-                        services.put(mapping, m);
+            Class c = Class.forName(className);
+            loadControllerMethods(c);
+        } catch (ClassNotFoundException ex) {
+            System.getLogger(HttpServer.class.getName()).log(System.Logger.Level.ERROR, "Controller class not found: " + className, ex);
+        }
+    }
+
+    /**
+     * Explorar automáticamente todas las clases con @RestController
+     */
+    private static void loadAllRestControllers() {
+        Set<Class<?>> restControllers = findRestControllers();
+        for (Class<?> controller : restControllers) {
+            loadControllerMethods(controller);
+        }
+        System.out.println("Loaded " + restControllers.size() + " REST controllers automatically");
+    }
+
+    /**
+     * Cargar métodos de un controlador específico
+     */
+    private static void loadControllerMethods(Class<?> c) {
+        if (c.isAnnotationPresent(RestController.class)) {
+            Method[] methods = c.getDeclaredMethods();
+            for (Method m : methods) {
+                if (m.isAnnotationPresent(GetMapping.class)) {
+                    String mapping = m.getAnnotation(GetMapping.class).value();
+                    services.put(mapping, m);
+                    System.out.println("Registered endpoint: " + mapping + " -> " + c.getSimpleName() + "." + m.getName());
+                }
+            }
+        }
+    }
+
+    /**
+     * Encontrar todas las clases con la anotación @RestController
+     */
+    private static Set<Class<?>> findRestControllers() {
+        Set<Class<?>> controllers = new HashSet<>();
+
+        try {
+            // Obtener el ClassLoader actual
+            ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            String packageName = "co.edu.escuelaing.microsptingboot";
+
+            // Convertir el nombre del paquete a un path
+            String path = packageName.replace('.', '/');
+            Enumeration<URL> resources = classLoader.getResources(path);
+
+            while (resources.hasMoreElements()) {
+                URL resource = resources.nextElement();
+                if (resource.getProtocol().equals("file")) {
+                    // Explorar directorio del sistema de archivos
+                    File directory = new File(resource.toURI());
+                    controllers.addAll(findClassesInDirectory(directory, packageName));
+                } else if (resource.getProtocol().equals("jar")) {
+                    // Explorar archivo JAR
+                    controllers.addAll(findClassesInJar(resource, packageName));
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error explorando el classpath: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return controllers;
+    }
+
+    /**
+     * Encontrar clases en un directorio del sistema de archivos
+     */
+    private static Set<Class<?>> findClassesInDirectory(File directory, String packageName) {
+        Set<Class<?>> controllers = new HashSet<>();
+
+        if (!directory.exists()) {
+            return controllers;
+        }
+
+        File[] files = directory.listFiles();
+        if (files != null) {
+            for (File file : files) {
+                if (file.isDirectory()) {
+                    // Recursivamente explorar subdirectorios
+                    controllers.addAll(findClassesInDirectory(file, packageName + "." + file.getName()));
+                } else if (file.getName().endsWith(".class")) {
+                    // Procesar archivo .class
+                    String className = packageName + '.' + file.getName().substring(0, file.getName().length() - 6);
+                    try {
+                        Class<?> clazz = Class.forName(className);
+                        if (clazz.isAnnotationPresent(RestController.class)) {
+                            controllers.add(clazz);
+                        }
+                    } catch (ClassNotFoundException e) {
+                        // Ignorar clases que no se pueden cargar
                     }
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            System.getLogger(HttpServer.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);
         }
+
+        return controllers;
+    }
+
+    /**
+     * Encontrar clases en un archivo JAR
+     */
+    private static Set<Class<?>> findClassesInJar(URL jarUrl, String packageName) {
+        Set<Class<?>> controllers = new HashSet<>();
+
+        try {
+            String jarPath = jarUrl.getPath().substring(5, jarUrl.getPath().indexOf("!"));
+            JarFile jarFile = new JarFile(jarPath);
+            Enumeration<JarEntry> entries = jarFile.entries();
+
+            while (entries.hasMoreElements()) {
+                JarEntry entry = entries.nextElement();
+                String entryName = entry.getName();
+
+                if (entryName.endsWith(".class") && entryName.startsWith(packageName.replace('.', '/'))) {
+                    String className = entryName.replace('/', '.').substring(0, entryName.length() - 6);
+                    try {
+                        Class<?> clazz = Class.forName(className);
+                        if (clazz.isAnnotationPresent(RestController.class)) {
+                            controllers.add(clazz);
+                        }
+                    } catch (ClassNotFoundException e) {
+                        // Ignorar clases que no se pueden cargar
+                    }
+                }
+            }
+
+            jarFile.close();
+        } catch (Exception e) {
+            System.err.println("Error procesando JAR: " + e.getMessage());
+        }
+
+        return controllers;
     }
 
     /**
@@ -132,6 +270,16 @@ public class HttpServer {
     }
 
     /**
+     * Check if a file exists in the given path
+     * @param filePath
+     * @return
+     */
+    private static boolean isFileExists(String filePath) {
+        File file = new File(filePath);
+        return file.exists() && file.isFile();
+    }
+
+    /**
      * handle html responses
      *
      * @param requestUri
@@ -145,8 +293,7 @@ public class HttpServer {
         // create the file path
         String file = requestUri.getPath().equalsIgnoreCase("/") ? basePath + "index.html" : basePath + requestUri.getPath();
 
-        File realFile = new File(file);
-        if (!realFile.exists()) {
+        if (!isFileExists(file)) {
             notFound(out);
             return;
         }
@@ -177,8 +324,7 @@ public class HttpServer {
 
         String file = basePath + requestUri.getPath();
 
-        File realFile = new File(file);
-        if (!realFile.exists()) {
+        if (!isFileExists(file)) {
             notFound(out);
             return;
         }
@@ -208,8 +354,7 @@ public class HttpServer {
 
         String file = basePath + requestUri.getPath();
 
-        File realFile = new File(file);
-        if (!realFile.exists()) {
+        if (!isFileExists(file)) {
             notFound(out);
             return;
         }
@@ -250,18 +395,32 @@ public class HttpServer {
                 + "\n\r";
 
         try {
-            
-            RequestParam rp = (RequestParam) m.getParameterAnnotations()[0][0];
-            
-            String queryParamName = rp.value();
-            
-            String paramName = req.getValue(queryParamName);
-            
-            if (paramName.equalsIgnoreCase("")){
-                paramName = rp.defaultValue();
+            // Obtener todos los parámetros del método
+            Parameter[] parameters = m.getParameters();
+            Object[] argsValues = new Object[parameters.length];
+
+            // Procesar cada parámetro
+            for (int i = 0; i < parameters.length; i++) {
+                Parameter param = parameters[i];
+
+                // Verificar si el parámetro tiene la anotación @RequestParam
+                if (param.isAnnotationPresent(RequestParam.class)) {
+                    RequestParam rp = param.getAnnotation(RequestParam.class);
+                    String queryParamName = rp.value();
+                    String paramValue = req.getValue(queryParamName);
+
+                    // Si el parámetro está vacío, usar el valor por defecto
+                    if (paramValue.equalsIgnoreCase("")) {
+                        paramValue = rp.defaultValue();
+                    }
+
+                    argsValues[i] = paramValue;
+                } else {
+                    // Si el parámetro no tiene @RequestParam, usar null o valor por defecto
+                    argsValues[i] = null;
+                }
             }
             
-            String[] argsValues = new String[]{paramName}; 
             out.write(header + m.invoke(null, argsValues));
         } catch (IllegalAccessException ex) {
             System.getLogger(HttpServer.class.getName()).log(System.Logger.Level.ERROR, (String) null, ex);

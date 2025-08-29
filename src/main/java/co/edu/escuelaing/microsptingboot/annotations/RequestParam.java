@@ -10,8 +10,9 @@ import java.lang.annotation.Target;
  * @author Sebastian
  */
 @Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.PARAMETER)
 public @interface RequestParam {
     
-    String value() default "Default";
+    String value();
     String defaultValue();
 }

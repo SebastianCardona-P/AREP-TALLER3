@@ -12,16 +12,29 @@ import java.util.concurrent.atomic.AtomicLong;
 @RestController
 public class GreetingController {
 
-	private static final String template = "Hello, %s!";
-	private final AtomicLong counter = new AtomicLong();
+    @GetMapping("/greeting")
+    public static String greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return "Hola " + name;
+    }
 
-	@GetMapping("/greeting")
-	public static String greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
-		return "Hola " + name;
-	}
-        
-        @GetMapping("/hello")
-        public static String helloService(@RequestParam(value = "name", defaultValue = "World") String name){
-            return "Hola hola " + name;
-        }
+    @GetMapping("/hello")
+    public static String helloService(@RequestParam(value = "name", defaultValue = "World") String name,
+                                      @RequestParam(value = "age", defaultValue = "0") String age) {
+        return "Hola hola " + name + ", tienes " + age + " años";
+    }
+
+    @GetMapping("/status")
+    public static String status() {
+        return "El servidor está funcionando correctamente";
+    }
+
+
+    @GetMapping("/welcome")
+    public static String welcome(
+            @RequestParam(value = "name", defaultValue = "Usuario") String name,
+            @RequestParam(value = "age", defaultValue = "0") String age,
+            @RequestParam(value = "city", defaultValue = "Ciudad Desconocida") String city
+    ) {
+        return "Bienvenido " + name + ", tienes " + age + " años y vives en " + city;
+    }
 }

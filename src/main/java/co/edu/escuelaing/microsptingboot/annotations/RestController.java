@@ -11,7 +11,7 @@ import java.lang.annotation.Target;
  * @author Sebastian
  */
 @Retention(RetentionPolicy.RUNTIME)
-
+@Target(ElementType.TYPE)
 public @interface RestController {
     
 }

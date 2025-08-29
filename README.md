@@ -1,432 +1,359 @@
-# MicroFramework Spring Boot - AREP Workshop 3
+# MicroSpringBoot Framework - AREP Taller 3
 
-A comprehensive web framework built in Java that enables developers to create REST services using lambda functions and manage static files efficiently. This project enhances the basic HTTP server from Workshop 1 by converting it into a fully functional web framework for backend development.
+Un servidor Web tipo Apache construido en Java que proporciona un framework IoC (Inversión de Control) para la construcción de aplicaciones web a partir de POJOs (Plain Old Java Objects). Este proyecto implementa las capacidades reflexivas de Java para cargar automáticamente beans y derivar aplicaciones web a partir de ellos.
 
-## Project Overview
+## Descripción del Proyecto
 
-This web framework provides developers with modern tools to:
+Este framework permite a los desarrolladores crear aplicaciones web modernas utilizando:
 
-- **Define REST services using lambda functions** - Simple and expressive service definitions
-- **Extract and manipulate query parameters** - Easy access to URL parameters within services
-- **Specify static file locations** - Flexible configuration of static resource directories
-- **Handle concurrent requests** - Multi-threaded server architecture
-- **Support multiple content types** - HTML, CSS, JavaScript, images, and JSON responses
+- **Servidor Web HTTP** - Capaz de entregar páginas HTML, CSS, JavaScript e imágenes PNG/JPG
+- **Framework IoC** - Construcción automática de aplicaciones web a partir de POJOs
+- **Capacidades Reflexivas** - Carga automática de beans usando anotaciones
+- **Manejo de Solicitudes No Concurrentes** - Procesamiento secuencial de múltiples solicitudes
+- **Soporte para Anotaciones** - `@RestController`, `@GetMapping`, `@RequestParam`
 
-## Key Features
+## Características Principales
 
-### 1. GET Method for REST Services
+### 1. Framework IoC con Anotaciones
 
-Implement REST services using intuitive lambda functions:
-
-```java
-get("/hello", (req, res) -> "Hello " + req.getValue("name"));
-get("/pi", (req, res) -> String.valueOf(Math.PI));
-```
-
-### 2. Query Parameter Extraction
-
-Access URL parameters easily within your services:
+El framework utiliza las capacidades reflexivas de Java para descubrir y cargar automáticamente componentes:
 
 ```java
-get("/greet", (req, res) -> "Hello " + req.getValue("name") + ", you are " + req.getValue("age") + " years old");
+@RestController
+public class GreetingController {
+    
+    @GetMapping("/greeting")
+    public static String greeting(@RequestParam(value = "name", defaultValue = "World") String name) {
+        return "Hola " + name;
+    }
+}
 ```
 
-### 3. Static File Management
+### 2. Servidor Web HTTP
 
-Configure where your static files are located:
+- Sirve archivos estáticos (HTML, CSS, JS, imágenes)
+- Maneja múltiples tipos de contenido con headers apropiados
+- Procesamiento de solicitudes HTTP GET
+- Respuestas 404 para recursos no encontrados
+
+### 3. Exploración Automática de Componentes
+
+El framework explora automáticamente el classpath buscando clases con `@RestController`:
 
 ```java
-staticfiles("/webroot");  // Files will be served from target/classes/webroot/
+mvn clean install
+// Carga automática - no requiere especificar controladores
+java -cp target/classes co.edu.escuelaing.microsptingboot.MicroSptingBoot
+
+// Carga específica - especificar controlador particular
+java -cp target/classes co.edu.escuelaing.microsptingboot.MicroSptingBoot co.edu.escuelaing.microsptingboot.controller.GreetingController
 ```
 
-## Getting Started
+## Servicios REST Disponibles
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes.
+El framework incluye los siguientes endpoints de ejemplo:
 
-### Prerequisites
+### GreetingController
 
-To run this project you need to have installed:
+- **GET** `/app/greeting?name=valor` - Saludo personalizado
+  - Ejemplo: `http://localhost:35000/app/greeting?name=Sebastian`
+  - Respuesta: `"Hola Sebastian"`
 
-- **Java 21** or higher
-- **Apache Maven 3.6** or higher
-- **Git** (to clone the repository)
+- **GET** `/app/hello?name=valor&age=valor` - Saludo con edad
+  - Ejemplo: `http://localhost:35000/app/hello?name=María&age=25`
+  - Respuesta: `"Hola hola María, tienes 25 años"`
 
-To verify if you have Java installed:
+- **GET** `/app/status` - Estado del servidor
+  - Ejemplo: `http://localhost:35000/app/status`
+  - Respuesta: `"El servidor está funcionando correctamente"`
 
-```
-java -version
-```
+- **GET** `/app/welcome?name=valor&age=valor&city=valor` - Bienvenida completa
+  - Ejemplo: `http://localhost:35000/app/welcome?name=Carlos&age=30&city=Bogotá`
+  - Respuesta: `"Bienvenido Carlos, tienes 30 años y vives en Bogotá"`
 
-To verify if you have Maven installed:
+### CalcuteController
 
-```
-mvn -version
-```
+- **GET** `/app/calculate/suma?a=valor&b=valor` - Operación de suma
+  - Ejemplo: `http://localhost:35000/app/calculate/suma?a=15&b=25`
+  - Respuesta: `"La suma de 15 + 25 = 40"`
 
-### Installing
+- **GET** `/app/calculate/resta?a=valor&b=valor` - Operación de resta
+  - Ejemplo: `http://localhost:35000/app/calculate/resta?a=50&b=20`
+  - Respuesta: `"La resta de 50 - 20 = 30"`
 
-Follow these steps to set up the development environment:
+### Importante
+Puedes añadir más controladores y servicios siguiendo el mismo patrón, simplemente creando nuevas clases anotadas con `@RestController` y métodos con `@GetMapping`, pues por ahora el framework solo soporta métodos estáticos. con anotaciones Get y devuelve solo valores de tipo String.
 
-1. **Clone the repository**
+## Instalación y Ejecución
 
+### Prerrequisitos
+
+- **Java 21** o superior
+- **Apache Maven 3.6** o superior
+- **Git** (para clonar el repositorio)
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/SebastianCardona-P/AREP-TALLER3.git
+   cd microSptingBoot
    ```
-   git clone https://github.com/SebastianCardona-P/AREP-TALLER2.git
-   cd AREP-TALLER2
-   ```
 
-2. **Compile the project**
-
-   ```
+2. **Compilar el proyecto**
+   ```bash
    mvn clean compile
    ```
 
-3. **Run the web application**
+3. **Ejecutar la aplicación**
 
-   ```
-   java -cp target/classes com.mycompany.httpserver.WebApplication.WebApplication
-   ```
-
-   or
-
-   ```
+   **Opción 1: Usando Maven**
+   ```bash
    mvn clean compile exec:java
    ```
 
-4. **Verify the server is running**
+   **Opción 2: Usando Java directamente**
+   ```bash
+   java -cp .\target\classes\ co.edu.escuelaing.microsptingboot.MicroSptingBoot
+   ```
 
-   Open your web browser and visit:
+   **Opción 3: Cargar controlador específico**
+   ```bash
+   java -cp .\target\classes\ co.edu.escuelaing.microsptingboot.MicroSptingBoot co.edu.escuelaing.microsptingboot.controller.GreetingController
+   ```
 
+4. **Verificar el funcionamiento**
+   
+   Abrir el navegador y visitar:
    ```
    http://localhost:35000
    ```
 
-   You should see a page with example forms that demonstrate the server's capabilities.
+## Arquitectura del Sistema
 
-## Usage Examples
-
-### Example Web Application
-
-Here's how a developer would use this framework to create a web application:
-
-```java
-public class WebApplication {
-    public static void main(String[] args) throws IOException, URISyntaxException {
-        // Configure static files location
-        staticfiles("/webroot");
-
-        // Define REST services with lambda functions
-        get("/hello", (req, resp) -> "hello " + req.getValue("name") +" you are " + req.getValue("age") + " years old");
-        get("/pi", (req, resp) -> String.valueOf(Math.PI));
-
-        // Start the server
-        startServer(args);
-    }
-}
-```
-
-### Supported URLs
-
-Once the server is running, you can test these endpoints:
-
-**REST Services:**
-
-- `http://localhost:35000/app/hello?name=Pedro&age=28` - Returns personalized greeting
-- `http://localhost:35000/app/pi` - Returns the value of PI
-- `http://localhost:35000/app/world` - Returns "hello world!"
-
-**Static Files:**
-
-- `http://localhost:35000/` - Main HTML page
-- `http://localhost:35000/index.html` - Same as above
-- `http://localhost:35000/styles/style.css` - CSS stylesheet
-- `http://localhost:35000/scripts/script.js` - JavaScript file
-- `http://localhost:35000/images/usuario.png` - Image files
-- `http://localhost:35000/usuario.png` - Same as above
-- `http://localhost:35000/images/otroUsuario.png` - Image files
-
-You can add others static files or images with png, jpg, ico or jpeg extensions in the correct directory, and the server will automatically serve these static files
-
-## Architecture
-
-### Project Structure
-
-The framework follows a standard Maven project structure with clear separation of concerns:
+### Estructura del Proyecto
 
 ```
-AREP-TALLER2/
+microSptingBoot/
 ├── src/
 │   ├── main/
 │   │   ├── java/
-│   │   │   └── com/mycompany/httpserver/
-│   │   │       ├── HttpServer.java          # Core server
-│   │   │       ├── HttpRequest.java         # Request handling
-│   │   │       ├── HttpResponse.java        # Response handling
-│   │   │       ├── Service.java             # Service
-│   │   │       └── WebApplication/
-│   │   │           └── WebApplication.java  # Example web
-│   │   └── resources/                       # Static web files
+│   │   │   └── co/edu/escuelaing/microsptingboot/
+│   │   │       ├── MicroSptingBoot.java           # Clase principal
+│   │   │       ├── annotations/                   # Anotaciones del framework
+│   │   │       │   ├── RestController.java
+│   │   │       │   ├── GetMapping.java
+│   │   │       │   └── RequestParam.java
+│   │   │       ├── controller/                    # Controladores de ejemplo
+│   │   │       │   ├── GreetingController.java
+│   │   │       │   └── CalcuteController.java
+│   │   │       └── httpServer/                    # Núcleo del servidor
+│   │   │           ├── HttpServer.java
+│   │   │           ├── HttpRequest.java
+│   │   │           └── HttpResponse.java
+│   │   └── resources/                             # Archivos estáticos
 │   │       ├── index.html
-│   │       ├── styles/style.css
-│   │       ├── scripts/script.js
+│   │       ├── styles/
+│   │       ├── scripts/
 │   │       └── images/
-│   └── test/
-│       └── java/                           # Comprehensive
-├── pom.xml                                 # Maven
-└── README.md                              # This file
+│   └── test/                                      # Pruebas unitarias
+│       └── java/
+├── pom.xml                                        # Configuración Maven
+└── README.md                                      # Documentación
 ```
 
-### Core Components
+### Componentes Principales
 
 #### 1. HttpServer
+- **Gestión de sockets** - Acepta y maneja conexiones de clientes
+- **Enrutamiento de solicitudes** - Dirige requests a handlers apropiados
+- **Servicio de archivos estáticos** - Sirve HTML, CSS, JS e imágenes
+- **Registro de servicios** - Administra mappings de servicios REST
+- **Exploración reflexiva** - Descubre automáticamente controladores
 
-The main server class that handles:
+#### 2. Sistema de Anotaciones
+- **@RestController** - Marca clases como controladores REST
+- **@GetMapping** - Define endpoints HTTP GET con rutas específicas
+- **@RequestParam** - Extrae parámetros de query con valores por defecto
 
-- **Socket management** - Accepts and manages client connections
-- **Request routing** - Directs requests to appropriate handlers
-- **Static file serving** - Serves HTML, CSS, JS, and image files
-- **Service registration** - Manages GET and POST service mappings
+#### 3. HttpRequest
+- **Extracción de parámetros** - Parsea parámetros URL usando `getValue()`
+- **Procesamiento URI** - Maneja paths y query strings
+- **Mapeo de parámetros** - Convierte query strings a pares clave-valor
 
-#### 2. HttpRequest
+#### 4. Framework IoC
+- **Carga automática de beans** - Descubre clases con `@RestController`
+- **Inyección de dependencias** - Resuelve parámetros con `@RequestParam`
+- **Gestión del ciclo de vida** - Administra instancias de componentes
 
-Handles HTTP request processing:
+## Uso para Desarrolladores Externos
 
-- **Query parameter extraction** - Parses URL parameters using `getValue()`
-- **URI parsing** - Processes request paths and query strings
-- **Parameter mapping** - Converts query strings to accessible key-value pairs
+### Creando un Nuevo Controlador
 
-#### 3. Service Interface
+1. **Crear la clase del controlador**
+   ```java
+   package co.edu.escuelaing.microsptingboot.controller;
 
-Enables lambda function registration:
+   import co.edu.escuelaing.microsptingboot.annotations.*;
+
+   @RestController
+   public class MyController {
+       
+       @GetMapping("/myservice")
+       public static String myService(
+           @RequestParam(value = "param1", defaultValue = "default") String param1,
+           @RequestParam(value = "param2", defaultValue = "0") String param2
+       ) {
+           return "Response: " + param1 + " - " + param2;
+       }
+   }
+   ```
+
+2. **Compilar y ejecutar**
+   ```bash
+   mvn clean compile
+   java -cp target/classes co.edu.escuelaing.microsptingboot.MicroSptingBoot
+   ```
+
+3. **Probar el servicio**
+   ```
+   http://localhost:35000/app/myservice?param1=test&param2=123
+   ```
+
+### Configuración de Archivos Estáticos
 
 ```java
-public interface Service {
-    public String executeService(HttpRequest req, HttpResponse res);
+// En el método main o durante la inicialización
+HttpServer.staticfiles("/public");  // Servir desde target/classes/public/
+```
+
+### Manejo de Parámetros
+
+```java
+@GetMapping("/calculate")
+public static String calculate(
+    @RequestParam(value = "operation", defaultValue = "sum") String op,
+    @RequestParam(value = "a", defaultValue = "0") String a,
+    @RequestParam(value = "b", defaultValue = "0") String b
+) {
+    // Lógica de negocio aquí
+    return "Result: " + result;
 }
 ```
 
-#### 4. WebApplication
+## Pruebas Automatizadas
 
-Example implementation showing framework usage:
+El proyecto incluye una suite completa de pruebas que valida:
 
-- **Service registration** - Demonstrates GET and POST service definitions
-- **Static file configuration** - Shows how to set up static resource directories
-- **Server startup** - Illustrates complete application setup
+### Cobertura de Pruebas
 
-## Testing
+- ✅ **GreetingControllerTest** - Pruebas de todos los métodos del controlador de saludos
+- ✅ **CalcuteControllerTest** - Pruebas de operaciones matemáticas y manejo de errores
+- ✅ **HttpServerTest** - Pruebas de lectura de archivos estáticos y funcionalidad del servidor
+- ✅ **HttpRequestTest** - Pruebas de extracción de parámetros de query
+- ✅ **AnnotationsTest** - Pruebas de funcionamiento de anotaciones del framework
+- ✅ **MicroSptingBootIntegrationTest** - Pruebas de integración extremo a extremo
 
-The project includes a comprehensive test suite that validates all framework functionality:
-
-### Test Categories
-
-#### 1. Integration Tests (`HttpServerIntegrationTest`)
-
-- End-to-end server functionality
-- Static file serving (HTML, CSS, JS, images)
-- REST service execution
-- Concurrent client handling
-- Error handling (404 responses)
-
-#### 2. Framework Tests (`WebApplicationTest`)
-
-- Service registration with lambda functions
-- Query parameter extraction
-- Static file configuration
-- Complex business logic in services
-- Multiple service coexistence
-
-#### 3. Functionality Tests (`WebFrameworkFunctionalityTest`)
-
-- Framework specification compliance
-- Edge case parameter handling
-- URL encoding support
-- Service overwriting behavior
-- GET/POST service independence
-
-### Running Tests
-
-Execute all tests:
+### Ejecutar las Pruebas
 
 ```bash
+# Ejecutar todas las pruebas
 mvn test
+
+# Ejecutar pruebas específicas
+mvn test -Dtest=GreetingControllerTest
+
+# Ver reporte de cobertura
+# Los reportes se generan en target/surefire-reports/
 ```
 
-Run specific test class:
+### Funcionalidades Probadas
+
+- Carga automática de controladores con `@RestController`
+- Registro correcto de endpoints con `@GetMapping`
+- Extracción de parámetros con `@RequestParam` y valores por defecto
+- Servicio de archivos estáticos (HTML, CSS, JS, imágenes)
+- Manejo de errores y casos límite
+- Procesamiento de múltiples solicitudes no concurrentes
+
+## Tipos de Contenido Soportados
+
+| Extensión | Content-Type | Descripción |
+|-----------|--------------|-------------|
+| `.html` | `text/html` | Documentos HTML |
+| `.css` | `text/css` | Hojas de estilo |
+| `.js` | `text/javascript` | Archivos JavaScript |
+| `.png` | `image/png` | Imágenes PNG |
+| `.jpg/.jpeg` | `image/jpg` | Imágenes JPEG |
+| `.ico` | `image/ico` | Archivos de iconos |
+
+## Características del Framework IoC
+
+### Capacidades Reflexivas
+
+- **Exploración automática del classpath** - Encuentra todas las clases anotadas
+- **Análisis de anotaciones en runtime** - Procesa `@RestController`, `@GetMapping`, `@RequestParam`
+- **Invocación dinámica de métodos** - Ejecuta servicios usando reflection
+- **Resolución de parámetros** - Mapea automáticamente query parameters a parámetros de método
+
+### Gestión de Beans
+
+- **Carga automática** - No requiere configuración XML o manual
+- **Registro dinámico** - Servicios disponibles inmediatamente después del descubrimiento
+- **Soporte para POJOs** - Cualquier clase Java puede convertirse en controlador
+
+## Limitaciones Actuales
+
+- **Procesamiento no concurrente** - Maneja una solicitud a la vez
+- **Solo métodos estáticos** - Los métodos de controlador deben ser static
+- **Parámetros tipo String** - Solo soporta parámetros de entrada tipo String
+- **Respuestas tipo String** - Solo retorna contenido tipo String
+
+## Construcción y Deployment
+
+### Construcción
 
 ```bash
-mvn test -Dtest=WebApplicationTest
+# Limpiar y compilar
+mvn clean compile
+
+# Ejecutar pruebas
+mvn test
+
+# Crear package
+mvn package
 ```
 
-View test results:
+### Deployment
 
 ```bash
-# Test reports are generated in target/surefire-reports/
+# Ejecutar aplicación
+java -cp target/classes co.edu.escuelaing.microsptingboot.MicroSptingBoot
+
+# O con controlador específico
+java -cp target/classes co.edu.escuelaing.microsptingboot.MicroSptingBoot co.edu.escuelaing.microsptingboot.controller.GreetingController
 ```
 
-### Test Coverage
+## Tecnologías Utilizadas
 
-The test suite includes **53 tests** covering:
+- **[Java 21](https://openjdk.org/projects/jdk/21/)** - Lenguaje de programación y runtime
+- **[Maven](https://maven.apache.org/)** - Gestión de dependencias y build
+- **[JUnit 5](https://junit.org/junit5/)** - Framework de testing
+- **[Mockito](https://mockito.org/)** - Mocking para pruebas
+- **Java Reflection API** - Capacidades reflexivas
+- **Java Socket API** - Comunicación de red
+- **Java NIO** - Operaciones del sistema de archivos
 
-- ✅ REST service registration and execution
-- ✅ Query parameter extraction (`getValue()`)
-- ✅ Static file serving for all content types
-- ✅ Concurrent request handling
-- ✅ Error handling and edge cases
-- ✅ Framework API compliance
-- ✅ Lambda function complex logic
+## Autor
 
-## Performance and Scalability
+- **Sebastian Cardona** - *Desarrollo inicial* - [SebastianCardona-P](https://github.com/SebastianCardona-P)
 
-### Current Limitations
+## Agradecimientos
 
-- **Single-threaded processing** - Handles one request at a time
-- **Memory-based file serving** - Loads entire files into memory
-- **No connection pooling** - Creates new socket for each request
+- Curso AREP en la Escuela Colombiana de Ingeniería Julio Garavito
+- Especificación HTTP/1.1 (RFC 2616)
+- Patrones de diseño de frameworks web modernos
+- Principios de Inversión de Control (IoC)
 
-## Development Guidelines
+---
 
-### Adding New Services
-
-To add a new REST service:
-
-```java
-// In your main application
-HttpServer.get("/myservice", (req, res) -> {
-    String param = req.getValue("param");
-    // Your business logic here
-    return "Response: " + param;
-});
-```
-
-### Error Handling
-
-Services should handle errors gracefully:
-
-```java
-HttpServer.get("/calculate", (req, res) -> {
-    try {
-        int a = Integer.parseInt(req.getValue("a"));
-        int b = Integer.parseInt(req.getValue("b"));
-        return String.valueOf(a + b);
-    } catch (NumberFormatException e) {
-        return "Error: Invalid numbers";
-    }
-});
-```
-
-### Static File Organization
-
-Place static files in `src/main/java/resources/`:
-
-```
-resources/
-├── index.html          # Main page
-├── styles/            # CSS files
-├── scripts/           # JavaScript files
-└── images/            # Image assets
-```
-
-### Important
-
-When you use the staticFiles method, if for example you type staticFiles("/webroot");
-the system will automatically create the directory in `target/classes/webroot` and copy everything in `src/main/java/resources/` to the new location to have default files.
-
-```
-http://localhost:35000/usuario.png
-http://localhost:35000/favicon.ico
-http://localhost:35000/otroUsuario.jpg
-```
-
-Returns binary image content with appropriate `Content-Type: image/*`
-
-}
-
-### Content Type Handling
-
-## Content Type Support
-
-The server automatically detects and serves content with proper MIME types:
-
-| File Extension | Content-Type      | Description      |
-| -------------- | ----------------- | ---------------- |
-| `.html`        | `text/html`       | HTML documents   |
-| `.css`         | `text/css`        | Stylesheet files |
-| `.js`          | `text/javascript` | JavaScript files |
-| `.png`         | `image/png`       | PNG images       |
-| `.jpg/.jpeg`   | `image/jpg`       | JPEG images      |
-| `.ico`         | `image/ico`       | Icon files       |
-
-## Deployment
-
-To deploy the server on a production system:
-
-1. **Build the project:**
-
-   ```bash
-   mvn clean package
-   ```
-
-2. **Run the application:**
-
-   ```bash
-   java -cp target/classes com.mycompany.httpserver.WebApplication.WebApplication
-   ```
-
-3. **Verify deployment:**
-
-   ```bash
-   curl http://localhost:35000/app/pi
-   # Should return: 3.141592653589793
-   ```
-
-   s
-
-4. **Configure the firewall** to allow connections on port 35000
-
-**Note:** For production, consider changing the default port by editing the `PORT` constant in `HttpServer.java`
-
-## Features
-
-The HTTP server implements the following characteristics:
-
-- ✅ Serve static HTML files
-- ✅ Serve CSS files for styling
-- ✅ Serve JavaScript files
-- ✅ Serve images (PNG, JPG, ICO)
-- ✅ Simple REST service (`/app/hello?name=value`)
-- ✅ Handle 404 errors
-- ✅ Serve get method
-- ✅ Extract query params
-- ✅ set static files directory
-
-## Built With
-
-- **[Java 21](https://openjdk.org/projects/jdk/21/)** - Programming language and runtime
-- **[Maven](https://maven.apache.org/)** - Dependency management and build tool
-- **[JUnit 5](https://junit.org/junit5/)** - Testing framework
-- **Java Socket API** - Network communication
-- **Java NIO** - File system operations
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-### Development Standards
-
-- Follow Java naming conventions
-- Write comprehensive tests for new features
-- Update documentation for API changes
-- Ensure all tests pass before submitting
-
-## Authors
-
-- **Sebastian Cardona** - _Initial work_ - [SebastianCardona-P](https://github.com/SebastianCardona-P)
-
-## Acknowledgments
-
-- AREP course at Escuela Colombiana de Ingeniería Julio Garavito
-- HTTP/1.1 specification (RFC 2616)
-- Modern web framework design pattern
